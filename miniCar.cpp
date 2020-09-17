@@ -1,4 +1,8 @@
-#include "miniCar.h"
+#include <stdio.h>
+#include <unistd.h>
+
+#include "src/Car.h"
+#include "src/QRCode.h"
 
 int main(void)
 {

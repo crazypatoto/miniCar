@@ -1,6 +1,7 @@
 #declare variables
 CC = g++
-csrc = $(wildcard *.cpp)
+csrc = $(wildcard *.cpp)\
+	   $(wildcard src/*.cpp)	
 obj = $(csrc:.cpp=.o)
 
 all: $(obj)
@@ -8,4 +9,6 @@ all: $(obj)
 
 clean: 
 	rm -f $(obj)
+	rm -f miniCar
 
+ 
