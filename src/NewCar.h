@@ -16,6 +16,7 @@ public:
     ~NewCar();
     void setCarParams(int16_t V,float W);
     void getOdometry(int16_t &x, int16_t &y, float &angle);
+    void clearOdometry();
 };
 
 

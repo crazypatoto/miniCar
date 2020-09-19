@@ -57,3 +57,13 @@ void NewCar::getOdometry(int16_t &x, int16_t &y, float &angle)
     int16_t _angle = (rxbuff[4] << 8) | rxbuff[5];
     angle = _angle / 10000.0;
 }
+
+void NewCar::clearOdometry()
+{
+    const char txbuff[3] = {'C', 'L', 'R'};
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        serialPutchar(fd, txbuff[i]);
+    }
+    delay(1);
+}
