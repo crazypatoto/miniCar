@@ -18,14 +18,14 @@ NewCar::~NewCar()
 void NewCar::setCarParams(int16_t V, float W)
 {
     char txbuff[6] = {'S', 0, 0, 0, 0, 'E'};
-    W *= 10000;
-    int16_t W10000 = (int16_t)(fabs(W) + 0.5);  //Round to interger
-    W10000 = W < 0 ? -W10000 : W10000;
+    W *= 1000;
+    int16_t W1000 = (int16_t)(fabs(W) + 0.5);  //Round to interger
+    W1000 = W < 0 ? -W1000 : W1000;
 
     txbuff[1] = (V >> 8) & 0xFF;
     txbuff[2] = V & 0xFF;
-    txbuff[3] = (W10000 >> 8) & 0xFF;
-    txbuff[4] = W10000 & 0xFF;
+    txbuff[3] = (W1000 >> 8) & 0xFF;
+    txbuff[4] = W1000 & 0xFF;
 
     for (uint8_t i = 0; i < 6; i++)
     {
