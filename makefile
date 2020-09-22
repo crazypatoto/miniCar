@@ -1,18 +1,24 @@
 #declare variables
-CC = g++
+TARGET = miniCar
+CC = gcc
+CCP = g++
+
 cppsrc = $(wildcard *.cpp)\
 	   $(wildcard src/*.cpp)
-
 csrc = $(wildcard lib/*/*.c)
 
-obj = $(cppsrc:.cpp=.o)\
-	  $(csrc:.c=.o)
+obj = $(cppsrc:.cpp=.o) $(csrc:.c=.o)
 
-all: $(obj)
-	$(CC) -o miniCar $^ -l wiringPi	
+$(TARGET): $(obj)
+	$(CCP) -o $@ $^ -l wiringPi	
+
+%.o : %.c
+	$(CC) $< -c -o $@
+
+%.o : %.cpp
+	$(CCP) $< -c -o $@ 
 
 clean: 
-	rm -f $(obj)
-	rm -f miniCar
+	rm -f $(obj) $(TARGET)
 
  
