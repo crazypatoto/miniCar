@@ -55,7 +55,7 @@ uint8_t QRCode::getInformation(int16_t& x, int16_t& y, int16_t& angle, uint32_t&
     y = (int16_t)(((rxbuff[6] & 0x7F) << 7) | (rxbuff[7] & 0x7F));
     y = (int16_t)((y & 0x2000) > 0 ? -(~(y | 0xC000) + 1) : y);
     angle = (int16_t)(((rxbuff[10] & 0x7F) << 7) | (rxbuff[11] & 0x7F));
-    angle = (int16_t)((angle + 90 + 360) % 360);
+    angle = (int16_t)((angle + 360) % 360);
     angle = (int16_t)(angle > 180 ? angle - 360 : angle);
     tagnum = (uint32_t)(((rxbuff[13] & 0x0F) << 7) | (rxbuff[14] & 0x7F));
     tagnum <<= 14;

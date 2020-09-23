@@ -31,7 +31,7 @@ void NewCar::setCarParams(int16_t V, float W)
     {
         serialPutchar(fd, txbuff[i]);
     }
-    delay(1);
+    delay(2);
 }
 
 void NewCar::getOdometry(int16_t &x, int16_t &y, float &angle)
@@ -42,6 +42,7 @@ void NewCar::getOdometry(int16_t &x, int16_t &y, float &angle)
     {
         serialPutchar(fd, txbuff[i]);
     }
+    delay(2);
 
     while (serialDataAvail(fd) == 0)
         ;
@@ -65,5 +66,5 @@ void NewCar::clearOdometry()
     {
         serialPutchar(fd, txbuff[i]);
     }
-    delay(1);
+    delay(2);
 }

@@ -7,6 +7,7 @@
 //#include "src/Car.h"
 #include "src/NewCar.h"
 #include "src/QRCode.h"
+#include "src/PIDController.h"
 #include "lib/rpi_ws281x/ws2811.h"
 
 ws2811_t ledstring =
@@ -58,41 +59,22 @@ uint32_t matrix_Stop[64] = {
     0x00000066, 0x00000066, 0x00000066, 0x00000066, 0x00000066, 0x00000066, 0x00000066, 0x00000066};
 
 uint32_t matrix_Idle[64] = {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000};
-uint32_t matrix_1[64] = {0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000 };
-uint32_t matrix_2[64] = {0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000 };
-uint32_t matrix_3[64] = {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000 };
-
-struct _pid
-{
-    float Target = 0;   //定義設定值
-    float Actual = 0;   //定義實際值
-    float err = 0;      //定義偏差值
-    float err_last = 0; //定義上一個偏差值
-    float Kp, Ki, Kd;   //定義比例、積分、微分系數
-    float Output = 0;   //定義電壓值（控制執行器的變數）
-    float integral = 0; //定義積分值
-} pid;
-
-float PID_Calculate(float target, float actual)
-{
-    pid.err = target - actual;
-    pid.integral = pid.err;
-    pid.Output = pid.Kp * pid.err + pid.Ki * pid.integral + pid.Kd * (pid.err - pid.err_last);
-    pid.err_last = pid.err;
-
-    return pid.Output;
-}
+uint32_t matrix_1[64] = {0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000};
+uint32_t matrix_2[64] = {0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000};
+uint32_t matrix_3[64] = {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000};
 
 QRCode qrCode;
+int16_t qrX, qrY, qrAngle;
+uint32_t tagnum;
+
 NewCar car;
 int16_t V = 0;
 float W = 0;
 int16_t x, y;
 float angle;
 
-int16_t tar_x = 1000;
-int16_t tar_y = 0;
-int16_t lastV = 0;
+PIDContorller anglePID(0.035, 0.000, 0.0, 3, -3, 0.05);
+PIDContorller linearPID(1, 0.00, 0.0, 930, -930, 5);
 
 void manualControl(void);
 char getch(void);
@@ -102,46 +84,217 @@ int main(void)
     ws2811_init(&ledstring);
     ledstring.channel[0].brightness = 32;
     memcpy(ledstring.channel[0].leds, matrix_Idle, 4 * 64);
+    //memset(ledstring.channel[0].leds, 0, 4 * 64);
     ws2811_render(&ledstring);
 
-    manualControl();
+    //manualControl();
 
-    pid.Kp = 0.66f;
-    pid.Ki = 0.55;
-    pid.Kd = 0;
-
+start:
+    
     car.clearOdometry();
     while (1)
     {
         car.getOdometry(x, y, angle);
-        //int16_t err_distance = pow((pow((tar_x - x), 2) + pow((tar_y - y), 2)), 0.5);
-        int16_t err_distance = tar_x - x;
-        //printf("x:%d y:%d angle:%f\n", x, y, angle / M_PI * 180.0);
-        V = -PID_Calculate(0, err_distance);
-        if (V > 1000)
+        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
         {
-            V = 1000;
-        }
-        else if (V < -1000)
-        {
-            V = -1000;
-        }
+            x = 930 + qrX;
+            if ((abs(qrX) <= 3) && (abs(V) < 25))
+            {
 
-        if (V - lastV > 5)
-        {
-            V = lastV + 5;
+                car.setCarParams(0, 0);
+                break;
+            }
         }
-        else if (V - lastV < -5)
-        {
-            V = lastV - 5;
-        }
-        printf("%d,%d,%d\n", x, y, V);
+        V = linearPID.calculate(930 - x);
+        printf("%d\n",V);
         car.setCarParams(V, 0);
-        lastV = V;
-        //printf("V:%d\n", V);
-        delay(10);
+        usleep(10000);
     }
 
+    usleep(10000);
+    while (1)
+    {
+
+        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
+        {
+            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
+            float err = 90 - qrAngle;
+            if (err > 180.0)
+                err -= 360.0;
+            else if (err < -180.0)
+                err += 360.0;
+            else if (fabs(err) < 1.0)
+            {
+                car.setCarParams(0, 0);
+                break;
+            }
+
+            W = anglePID.calculate(err);
+        }
+        else
+        {
+            // puts("NO TAG!");
+        }
+        car.setCarParams(0, W);
+        car.getOdometry(x, y, angle);
+        //printf("%lf,%lf\n", angle, W);
+        usleep(10000);
+    }
+
+    usleep(10000);
+    car.clearOdometry();
+    while (1)
+    {
+        car.getOdometry(x, y, angle);
+        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
+        {
+            x = 930 - qrY;
+            if ((abs(qrY) <= 3) && (abs(V) < 25))
+            {
+
+                car.setCarParams(0, 0);
+                break;
+            }
+        }
+        V = linearPID.calculate(930 - x);
+        printf("%d\n",V);
+        car.setCarParams(V, 0);
+        usleep(10000);
+    }
+
+    usleep(10000);
+    while (1)
+    {
+
+        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
+        {
+            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
+            float err = 180 - qrAngle;
+            if (err > 180.0)
+                err -= 360.0;
+            else if (err < -180.0)
+                err += 360.0;
+            else if (fabs(err) < 1.0)
+            {
+                car.setCarParams(0, 0);
+                break;
+            }
+
+            W = anglePID.calculate(err);
+        }
+        else
+        {
+            // puts("NO TAG!");
+        }
+        car.setCarParams(0, W);
+        car.getOdometry(x, y, angle);
+        //printf("%lf,%lf\n", angle, W);
+        usleep(10000);
+    }
+
+    usleep(10000);
+    car.clearOdometry();
+    while (1)
+    {
+        car.getOdometry(x, y, angle);
+        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
+        {
+            x = 930 - qrX;
+            if ((abs(qrX) <= 3) && (abs(V) < 25))
+            {
+
+                car.setCarParams(0, 0);
+                break;
+            }
+        }
+        V = linearPID.calculate(930 - x);
+        printf("%d\n",V);
+        car.setCarParams(V, 0);
+        usleep(10000);
+    }
+
+    usleep(10000);
+    while (1)
+    {
+
+        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
+        {
+            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
+            float err = -90 - qrAngle;
+            if (err > 180.0)
+                err -= 360.0;
+            else if (err < -180.0)
+                err += 360.0;
+            else if (fabs(err) < 1.0)
+            {
+                car.setCarParams(0, 0);
+                break;
+            }
+
+            W = anglePID.calculate(err);
+        }
+        else
+        {
+            // puts("NO TAG!");
+        }
+        car.setCarParams(0, W);
+        car.getOdometry(x, y, angle);
+        //printf("%lf,%lf\n", angle, W);
+        usleep(10000);
+    }
+
+    usleep(10000);
+    car.clearOdometry();
+    while (1)
+    {
+        car.getOdometry(x, y, angle);
+        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
+        {
+            x = 930 + qrY;
+            if ((abs(qrY) <= 3) && (abs(V) < 25))
+            {
+
+                car.setCarParams(0, 0);
+                break;
+            }
+        }
+        V = linearPID.calculate(930 - x);
+        printf("%d\n",V);
+        car.setCarParams(V, 0);
+        usleep(10000);
+    }
+
+     usleep(10000);
+    while (1)
+    {
+
+        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
+        {
+            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
+            float err = 0 - qrAngle;
+            if (err > 180.0)
+                err -= 360.0;
+            else if (err < -180.0)
+                err += 360.0;
+            else if (fabs(err) < 1.0)
+            {
+                car.setCarParams(0, 0);
+                break;
+            }
+
+            W = anglePID.calculate(err);
+        }
+        else
+        {
+            // puts("NO TAG!");
+        }
+        car.setCarParams(0, W);
+        car.getOdometry(x, y, angle);
+        //printf("%lf,%lf\n", angle, W);
+        usleep(10000);
+    }
+
+    goto start;
     return 0;
 }
 
@@ -239,8 +392,12 @@ void manualControl(void)
             ws2811_render(&ledstring);
         }
 
-        car.getOdometry(x, y, angle);
-        printf("%d,%d\n", x, y);
+        //car.getOdometry(x, y, angle);
+        //printf("%d,%d\n", x, y);
+
+        qrCode.getInformation(qrX, qrY, qrAngle, tagnum);
+        printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
+
         //printf("x:%d y:%d angle:%f\n", x, y, angle / M_PI * 180.0);
     }
 }
