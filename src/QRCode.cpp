@@ -25,9 +25,10 @@ QRCode::QRCode(/* args */)
     serialFlush(fd);
 }
 
-uint8_t QRCode::getInformation(int16_t& x, int16_t& y, int16_t& angle, uint32_t& tagnum)
+uint8_t QRCode::getInformation(int16_t &x, int16_t &y, int16_t &angle, uint32_t &tagnum)
 {
     char rxbuff[21] = {0};
+    uint16_t timeout_count = 0;
     for (int i = 0; i < 2; i++)
     {
         serialPutchar(fd, txData[i]);
@@ -35,8 +36,12 @@ uint8_t QRCode::getInformation(int16_t& x, int16_t& y, int16_t& angle, uint32_t&
 
     //printf("Data sENT\n");
 
-    while (serialDataAvail(fd) == 0)
-        ;
+    while (serialDataAvail(fd) == 0){
+        if(timeout_count++ > 5){
+            return 0;
+        }
+        usleep(1000);
+    };
     for (int i = 0; i < 21; i++)
     {
         rxbuff[i] = serialGetchar(fd);
@@ -55,14 +60,16 @@ uint8_t QRCode::getInformation(int16_t& x, int16_t& y, int16_t& angle, uint32_t&
     y = (int16_t)(((rxbuff[6] & 0x7F) << 7) | (rxbuff[7] & 0x7F));
     y = (int16_t)((y & 0x2000) > 0 ? -(~(y | 0xC000) + 1) : y);
     angle = (int16_t)(((rxbuff[10] & 0x7F) << 7) | (rxbuff[11] & 0x7F));
-    angle = (int16_t)((angle + 360) % 360);
-    angle = (int16_t)(angle > 180 ? angle - 360 : angle);
+    angle = (360 - angle);
+    angle = angle > 180 ? angle - 360 : angle;
+    //angle = (int16_t)(angle > 180 ? angle - 360 : angle);
     tagnum = (uint32_t)(((rxbuff[13] & 0x0F) << 7) | (rxbuff[14] & 0x7F));
     tagnum <<= 14;
     tagnum |= (uint32_t)(((rxbuff[15] & 0x7F) << 7) | (rxbuff[16] & 0x7F));
     tagnum <<= 7;
     tagnum |= (uint32_t)(rxbuff[17] & 0x7F);
 
+    //delay(5);
     return 1;
 }
 

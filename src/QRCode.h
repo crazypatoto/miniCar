@@ -1,10 +1,11 @@
 #ifndef QRCODE_H
 #define QRCODE_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <wiringSerial.h>
 #include <wiringPi.h>
-#include <stdio.h>
+#include <cstdio>
+#include <unistd.h>  // for STDIN_FILENO
 
 #define EN_485 (4)
 

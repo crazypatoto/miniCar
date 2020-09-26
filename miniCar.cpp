@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
 #include <termios.h> // for tcxxxattr, ECHO, etc ..
 #include <unistd.h>  // for STDIN_FILENO
 
@@ -9,6 +9,9 @@
 #include "src/QRCode.h"
 #include "src/PIDController.h"
 #include "lib/rpi_ws281x/ws2811.h"
+
+#define degToRad(angleInDegrees) ((angleInDegrees)*M_PI / 180.0f)
+#define radToDeg(angleInRadians) ((angleInRadians)*180.0f / M_PI)
 
 ws2811_t ledstring =
 
@@ -63,238 +66,178 @@ uint32_t matrix_1[64] = {0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x00593
 uint32_t matrix_2[64] = {0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000};
 uint32_t matrix_3[64] = {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0059339F, 0x0059339F, 0x0059339F, 0x00000000, 0x00000000};
 
+//QRCode Variables
 QRCode qrCode;
 int16_t qrX, qrY, qrAngle;
-uint32_t tagnum;
+uint32_t qrTagNum;
 
+//Car Variables
 NewCar car;
-int16_t V = 0;
-float W = 0;
-int16_t x, y;
-float angle;
+int16_t setV = 0;
+float setW = 0;
+int16_t odmX = 0, odmY = 0;
+int16_t odmX_offset = 0, odmY_offset = 0;
+float odmAngle = 0;
+float odmAngle_offset = 0;
 
-PIDContorller anglePID(0.035, 0.000, 0.0, 3, -3, 0.05);
-PIDContorller linearPID(1, 0.00, 0.0, 930, -930, 5);
+//PID Controllers
+//PIDContorller angularPID(0.035, 0.000, 0.0, 3, -3, 0.05);
+PIDContorller angularPID(0.035, 0.000, 0.0, 3, -3, 0.05);
+PIDContorller linearPID(0.7, 0.00, 0.01, 700, -700, 5);
 
 void manualControl(void);
 char getch(void);
 
-int main(void)
+void setAngle(int16_t targetX, int16_t targetY)
 {
+    car.getOdometry(odmX, odmY, odmAngle);
+    float targetAngle = (atan2(targetY, targetX)) / M_PI * 180.0;
+    printf("Target = %f\n", targetAngle);
+
+    while (1)
+    {
+        if (qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum))
+        {
+            //printf("Now = %d\n", qrAngle);
+            //printf("Err = %f\n", targetAngle - qrAngle);
+            float err = targetAngle - qrAngle;
+            if (err > 180.0)
+            {
+                err -= 360.0;
+            }
+            else if (err < -180.0)
+            {
+                err += 360.0;
+            }
+
+            setW = -angularPID.calculate(err);
+            if (abs(err) <= 0.02 && (abs(setW) < 0.02))
+            {
+                car.setCarParams(setV, 0);
+                break;
+            }
+            car.setCarParams(setV, setW);
+            usleep(10000);
+        }
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    system("clear");
     ws2811_init(&ledstring);
     ledstring.channel[0].brightness = 32;
-    memcpy(ledstring.channel[0].leds, matrix_Idle, 4 * 64);
-    //memset(ledstring.channel[0].leds, 0, 4 * 64);
+    //memcpy(ledstring.channel[0].leds, matrix_Idle, 4 * 64);
+    memset(ledstring.channel[0].leds, 0, 4 * 64);
     ws2811_render(&ledstring);
 
-    //manualControl();
-
-start:
-    
+    // while (1)
+    // {
+    //     if(qrCode.getInformation(qrX,qrY,qrAngle,qrTagNum)){
+    //         printf("qrX: %d, qrY: %d, qrAngle: %d, qrTagNum: %d\n",qrX,qrY,qrAngle,qrTagNum);
+    //         car.setOdometry(qrX,qrY,degToRad(qrAngle));
+    //     }
+    //     car.getOdometry(odmX,odmY,odmAngle);
+    //     printf("x:%d y:%d angle:%f\n",odmX,odmY,odmAngle);
+    //     usleep(1000000);
+    // }
+    //  car.clearOdometry();
+    // setAngle(1, 0);
+    // setAngle(-1, 0);
+    // setAngle(0, 1);
+    // setAngle(0, -1);
+    // setAngle(1, 1);
+    // setAngle(-1, -1);
+    // setAngle(-1, 1);
+    // setAngle(1, -1);
+    // setAngle(1, 0);
+    // return 0;
+    setAngle(100, 0);
     car.clearOdometry();
-    while (1)
-    {
-        car.getOdometry(x, y, angle);
-        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
-        {
-            x = 930 + qrX;
-            if ((abs(qrX) <= 3) && (abs(V) < 25))
-            {
 
-                car.setCarParams(0, 0);
-                break;
-            }
-        }
-        V = linearPID.calculate(930 - x);
-        printf("%d\n",V);
-        car.setCarParams(V, 0);
-        usleep(10000);
-    }
-
-    usleep(10000);
+    int16_t targetX = -890 * 3, targetY = 0;
+    setAngle(targetX, targetY);
+    usleep(500000);
+    qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum);
+    car.setOdometry(qrX, qrY, degToRad(qrAngle));
     while (1)
     {
 
-        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
+        if (qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum))
         {
-            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
-            float err = 90 - qrAngle;
-            if (err > 180.0)
-                err -= 360.0;
-            else if (err < -180.0)
-                err += 360.0;
-            else if (fabs(err) < 1.0)
+            switch (qrTagNum)
             {
-                car.setCarParams(0, 0);
+            case 2:
+                car.setOdometry(-890 + qrX, qrY, degToRad(qrAngle));
+                break;
+            case 3:
+                car.setOdometry(qrX, qrY, degToRad(qrAngle));
+                break;
+            case 5:
+                car.setOdometry(-890 * 2 + qrX, qrY, degToRad(qrAngle));
+                break;
+
+            default:
                 break;
             }
+            // odmX -= odmX_offset;
+            // odmY -= odmY_offset;
+            // odmAngle -= odmAngle_offset;
+            // odmAngle = atan2(sinf(odmAngle), cosf(odmAngle));
 
-            W = anglePID.calculate(err);
+            // else if (qrTagNum == 5)
+            // {
+            //     start_flag = 0;
+            //     setW = 0;
+            // }
+            // else if (qrTagNum == 3)
+            // {
+            //     odmAngle_offset = odmAngle - qrAngle;
+            //     odmX_offset = odmX - (0 + qrX);
+            //     odmY_offset = odmY - qrY;
+            // }
         }
-        else
+        car.getOdometry(odmX, odmY, odmAngle);
+
+        printf("XERR: %d, YERR: %d\n", targetX - odmX, targetY - odmY);
+        float dErr = powf(powf(targetX - odmX, 2) + powf(targetY - odmY, 2), 0.5);
+        float dotErr = cosf(degToRad(odmAngle)) * (targetX - odmX) + sinf(degToRad(odmAngle)) * (targetY - odmY);
+        dErr = dotErr > 0 ? dErr : -dErr;
+        printf("dErr = %f\n", dErr);
+        if (abs(dErr) < 3 && abs(setV) < 10)
         {
-            // puts("NO TAG!");
+            car.setCarParams(0, 0);
+            break;
         }
-        car.setCarParams(0, W);
-        car.getOdometry(x, y, angle);
-        //printf("%lf,%lf\n", angle, W);
+        //printf("dRrr = %f\n", dErr);
+        setV = linearPID.calculate(dErr);
+
+        float targetAngle = (atan2(targetY - odmY, targetX - odmX)) / M_PI * 180.0;
+        float err;
+
+        err = targetAngle - odmAngle;
+
+        if (err > 180.0)
+        {
+            err -= 360.0;
+        }
+        else if (err < -180.0)
+        {
+            err += 360.0;
+        }
+        // if (abs(err) <= 1 && setW < 0.01)
+        // {
+        //     setW = 0;
+        //     start_flag = 0;
+        // }
+        setW = -angularPID.calculate(err);
+
+        printf("V: %d W%f\n", setV, setW);
+        car.setCarParams(setV, setW);
+        printf("odmX = %d, odmY = %d, odmAngle = %f\n", odmX, odmY, odmAngle);
         usleep(10000);
     }
 
-    usleep(10000);
-    car.clearOdometry();
-    while (1)
-    {
-        car.getOdometry(x, y, angle);
-        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
-        {
-            x = 930 - qrY;
-            if ((abs(qrY) <= 3) && (abs(V) < 25))
-            {
-
-                car.setCarParams(0, 0);
-                break;
-            }
-        }
-        V = linearPID.calculate(930 - x);
-        printf("%d\n",V);
-        car.setCarParams(V, 0);
-        usleep(10000);
-    }
-
-    usleep(10000);
-    while (1)
-    {
-
-        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
-        {
-            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
-            float err = 180 - qrAngle;
-            if (err > 180.0)
-                err -= 360.0;
-            else if (err < -180.0)
-                err += 360.0;
-            else if (fabs(err) < 1.0)
-            {
-                car.setCarParams(0, 0);
-                break;
-            }
-
-            W = anglePID.calculate(err);
-        }
-        else
-        {
-            // puts("NO TAG!");
-        }
-        car.setCarParams(0, W);
-        car.getOdometry(x, y, angle);
-        //printf("%lf,%lf\n", angle, W);
-        usleep(10000);
-    }
-
-    usleep(10000);
-    car.clearOdometry();
-    while (1)
-    {
-        car.getOdometry(x, y, angle);
-        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
-        {
-            x = 930 - qrX;
-            if ((abs(qrX) <= 3) && (abs(V) < 25))
-            {
-
-                car.setCarParams(0, 0);
-                break;
-            }
-        }
-        V = linearPID.calculate(930 - x);
-        printf("%d\n",V);
-        car.setCarParams(V, 0);
-        usleep(10000);
-    }
-
-    usleep(10000);
-    while (1)
-    {
-
-        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
-        {
-            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
-            float err = -90 - qrAngle;
-            if (err > 180.0)
-                err -= 360.0;
-            else if (err < -180.0)
-                err += 360.0;
-            else if (fabs(err) < 1.0)
-            {
-                car.setCarParams(0, 0);
-                break;
-            }
-
-            W = anglePID.calculate(err);
-        }
-        else
-        {
-            // puts("NO TAG!");
-        }
-        car.setCarParams(0, W);
-        car.getOdometry(x, y, angle);
-        //printf("%lf,%lf\n", angle, W);
-        usleep(10000);
-    }
-
-    usleep(10000);
-    car.clearOdometry();
-    while (1)
-    {
-        car.getOdometry(x, y, angle);
-        if ((qrCode.getInformation(qrX, qrY, qrAngle, tagnum)) && (abs(x) > 100))
-        {
-            x = 930 + qrY;
-            if ((abs(qrY) <= 3) && (abs(V) < 25))
-            {
-
-                car.setCarParams(0, 0);
-                break;
-            }
-        }
-        V = linearPID.calculate(930 - x);
-        printf("%d\n",V);
-        car.setCarParams(V, 0);
-        usleep(10000);
-    }
-
-     usleep(10000);
-    while (1)
-    {
-
-        if (qrCode.getInformation(qrX, qrY, qrAngle, tagnum))
-        {
-            //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
-            float err = 0 - qrAngle;
-            if (err > 180.0)
-                err -= 360.0;
-            else if (err < -180.0)
-                err += 360.0;
-            else if (fabs(err) < 1.0)
-            {
-                car.setCarParams(0, 0);
-                break;
-            }
-
-            W = anglePID.calculate(err);
-        }
-        else
-        {
-            // puts("NO TAG!");
-        }
-        car.setCarParams(0, W);
-        car.getOdometry(x, y, angle);
-        //printf("%lf,%lf\n", angle, W);
-        usleep(10000);
-    }
-
-    goto start;
     return 0;
 }
 
@@ -317,26 +260,26 @@ void manualControl(void)
             case 'A':
                 // code for arrow up
                 //puts("Up");
-                V += 10;
+                setV += 10;
                 break;
             case 'B':
                 // code for arrow down
                 //puts("Down");
-                V -= 10;
+                setV -= 10;
                 break;
             case 'C':
                 // code for arrow right
                 //puts("Right");
-                W += 0.1f;
+                setW += 0.1f;
                 break;
             case 'D':
                 // code for arrow left
                 //puts("Left");
-                W -= 0.1f;
+                setW -= 0.1f;
                 break;
             }
-            // printf("V:%d\tW:%lf\n", V, W);
-            car.setCarParams(V, W);
+            // printf("setV:%d\tW:%lf\n", setV, setW);
+            car.setCarParams(setV, setW);
         }
         else if (ch == 'o' || ch == 'O')
         {
@@ -346,42 +289,42 @@ void manualControl(void)
         {
             memcpy(ledstring.channel[0].leds, matrix_Stop, 4 * 64);
             ws2811_render(&ledstring);
-            while (abs(V) > 0 || fabs(W) > 0.0f)
+            while (abs(setV) > 0 || fabs(setW) > 0.0f)
             {
-                if (V > 0)
+                if (setV > 0)
                 {
-                    V -= 10;
+                    setV -= 10;
                 }
-                else if (V < 0)
+                else if (setV < 0)
                 {
-                    V += 10;
+                    setV += 10;
                 }
-                if (W > 0.1f)
+                if (setW > 0.1f)
                 {
-                    W -= 0.1f;
+                    setW -= 0.1f;
                 }
-                else if (W < -0.01f)
+                else if (setW < -0.01f)
                 {
-                    W += 0.1f;
+                    setW += 0.1f;
                 }
                 else
                 {
-                    W = 0;
+                    setW = 0;
                 }
-                //printf("V:%d\tW:%lf\n", V, W);
-                car.setCarParams(V, W);
+                //printf("setV:%d\tW:%lf\n", setV, setW);
+                car.setCarParams(setV, setW);
                 delay(10);
             }
-            V = 0;
-            W = 0.0f;
+            setV = 0;
+            setW = 0.0f;
         }
 
-        if (W > 0.0f)
+        if (setW > 0.0f)
         {
             memcpy(ledstring.channel[0].leds, matrix_Right, 4 * 64);
             ws2811_render(&ledstring);
         }
-        else if (W < 0.0f)
+        else if (setW < 0.0f)
         {
             memcpy(ledstring.channel[0].leds, matrix_Left, 4 * 64);
             ws2811_render(&ledstring);
@@ -392,11 +335,11 @@ void manualControl(void)
             ws2811_render(&ledstring);
         }
 
-        //car.getOdometry(x, y, angle);
-        //printf("%d,%d\n", x, y);
+        car.getOdometry(odmX, odmY, odmAngle);
+        printf("X:%d Y:%d Angle:%f\n", odmX, odmY, odmAngle);
 
-        qrCode.getInformation(qrX, qrY, qrAngle, tagnum);
-        printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, tagnum);
+        //qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum);
+        //printf("QRCode: X:%d, Y:%d, Angle:%d, Num:%d\n", qrX, qrY, qrAngle, qrTagNum);
 
         //printf("x:%d y:%d angle:%f\n", x, y, angle / M_PI * 180.0);
     }
