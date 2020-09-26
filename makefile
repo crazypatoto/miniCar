@@ -16,7 +16,7 @@ $(TARGET): $(obj)
 	$(CC) $< -c -o $@
 
 %.o : %.cpp
-	$(CCP) $< -c -o $@ 
+	$(CCP) $< -c -o $@ -I include/
 
 clean: 
 	rm -f $(obj) $(TARGET)

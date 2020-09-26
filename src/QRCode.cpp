@@ -50,8 +50,7 @@ uint8_t QRCode::getInformation(int16_t &x, int16_t &y, int16_t &angle, uint32_t 
     //puts("");
 
     if ((rxbuff[0] & 0b00000010) > 0)
-    {
-        tagnum = 0;
+    {        
         return 0;
     }
 
