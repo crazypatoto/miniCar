@@ -83,7 +83,8 @@ float odmAngle_offset = 0;
 //PID Controllers
 //PIDContorller angularPID(0.035, 0.000, 0.0, 3, -3, 0.05);
 PIDContorller angularPID(0.035, 0.000, 0.0, 3, -3, 0.05);
-PIDContorller linearPID(0.7, 0.00, 0.01, 700, -700, 5);
+PIDContorller angularPID2(0.055, 0.000, 0.0, 3, -3, 0.05);
+PIDContorller linearPID(0.7, 0.00, 0.01, 1000, -1000, 5);
 
 void manualControl(void);
 char getch(void);
@@ -155,7 +156,8 @@ int main(int argc, char *argv[])
     setAngle(100, 0);
     car.clearOdometry();
 
-    int16_t targetX = -890 * 3, targetY = 0;
+    int16_t targetX = 900 * 7, targetY = 0;
+    int16_t currentTargetX = 900 * 7;
     setAngle(targetX, targetY);
     usleep(500000);
     qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum);
@@ -165,21 +167,23 @@ int main(int argc, char *argv[])
 
         if (qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum))
         {
-            switch (qrTagNum)
-            {
-            case 2:
-                car.setOdometry(-890 + qrX, qrY, degToRad(qrAngle));
-                break;
-            case 3:
-                car.setOdometry(qrX, qrY, degToRad(qrAngle));
-                break;
-            case 5:
-                car.setOdometry(-890 * 2 + qrX, qrY, degToRad(qrAngle));
-                break;
-
-            default:
-                break;
-            }
+            // switch (qrTagNum)
+            // {
+            // case 2:
+            //     car.setOdometry(-890 + qrX, qrY, degToRad(qrAngle));
+            //     break;
+            // case 3:
+            //     car.setOdometry(qrX, qrY, degToRad(qrAngle));
+            //     break;
+            // case 5:
+            //     car.setOdometry(-890 * 2 + qrX, qrY, degToRad(qrAngle));
+            //     break;
+            // // case 6:
+            // //     car.setOdometry(-890 * 3 + qrX, qrY, degToRad(qrAngle));
+            // default:
+            //     break;
+            // }
+            car.setOdometry(890*(qrTagNum-1) + qrX, qrY, degToRad(qrAngle));
             // odmX -= odmX_offset;
             // odmY -= odmY_offset;
             // odmAngle -= odmAngle_offset;
@@ -211,8 +215,14 @@ int main(int argc, char *argv[])
         }
         //printf("dRrr = %f\n", dErr);
         setV = linearPID.calculate(dErr);
+        
+        if(targetX - odmX > 900){
+            currentTargetX = odmX + 900;
+        }else{
+            currentTargetX = targetX;
+        }
 
-        float targetAngle = (atan2(targetY - odmY, targetX - odmX)) / M_PI * 180.0;
+        float targetAngle = (atan2(targetY - odmY, currentTargetX - odmX)) / M_PI * 180.0;
         float err;
 
         err = targetAngle - odmAngle;
@@ -230,7 +240,7 @@ int main(int argc, char *argv[])
         //     setW = 0;
         //     start_flag = 0;
         // }
-        setW = -angularPID.calculate(err);
+        setW = -angularPID2.calculate(err);
 
         printf("V: %d W%f\n", setV, setW);
         car.setCarParams(setV, setW);
