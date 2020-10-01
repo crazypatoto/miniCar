@@ -32,16 +32,16 @@ float odmAngle = 0;
 
 //PID Controllers
 PIDContorller angularPID(0.035, 0.000, 0.0, 3, -3, 0.05);
-PIDContorller linearPID(0.85, 0.000, 0.00, 1000, -1000, 7.5);
+PIDContorller linearPID(0.45, 0.000, 0.00, 1000, -1000, 3.0);
 //PIDContorller linearPID(0.7, 0.0, 0.01, 1000, -1000, 5);
 
 void manualControl(void);
 char getch(void);
 
-void setAngle(int16_t targetX, int16_t targetY)
+void setAngle(float targetAngle)
 {
     car.getOdometry(odmX, odmY, odmAngle);
-    float targetAngle = (atan2(targetY - odmY, targetX - odmX)) / M_PI * 180.0;
+    //float targetAngle = (atan2(targetY - odmY, targetX - odmX)) / M_PI * 180.0;
     //printf("%d %d\n", targetY - odmY, targetX - odmX);
     printf("Target = %f\n", targetAngle);
 
@@ -49,7 +49,6 @@ void setAngle(int16_t targetX, int16_t targetY)
     {
         if (qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum))
         {
-            //printf("Now = %d\n", qrAngle);
             //printf("Err = %f\n", targetAngle - qrAngle);
             float err = targetAngle - qrAngle;
             if (err > 180.0)
@@ -131,6 +130,20 @@ int genQR(char ch)
     }
     else if (ch == 'i')
     {
+        currentQR->xPos = 1250;
+        currentQR->yPos = -890;
+        currentQR->tagNum = 8;
+
+        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+        currentQR->next = newQR;
+        currentQR = currentQR->next;
+        currentQR->xPos = 890;
+        currentQR->yPos = -890;
+        currentQR->tagNum = 5;
+
+        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+        currentQR->next = newQR;
+        currentQR = currentQR->next;
         currentQR->xPos = 0;
         currentQR->yPos = 0;
         currentQR->tagNum = 1;
@@ -138,113 +151,51 @@ int genQR(char ch)
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
         currentQR = currentQR->next;
-        currentQR->xPos = 930;
-        currentQR->yPos = 930;
-        currentQR->tagNum = 3;
+        currentQR->xPos = 0;
+        currentQR->yPos = -890;
+        currentQR->tagNum = 4;
 
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
         currentQR = currentQR->next;
-        currentQR->xPos = -930;
-        currentQR->yPos = 930;
-        currentQR->tagNum = 5;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = -930 * 2;
-        currentQR->yPos = 930;
+        currentQR->xPos = 0;
+        currentQR->yPos = -890 * 2;
         currentQR->tagNum = 6;
 
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
         currentQR = currentQR->next;
-        currentQR->xPos = -930;
-        currentQR->yPos = 930;
-        currentQR->tagNum = 5;  
+        currentQR->xPos = 0;
+        currentQR->yPos = -890 * 3;
+        currentQR->tagNum = 7;
 
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
         currentQR = currentQR->next;
         currentQR->xPos = 0;
-        currentQR->yPos = 930;
-        currentQR->tagNum = 2;
+        currentQR->yPos = -890 * 2;
+        currentQR->tagNum = 6;
 
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
         currentQR = currentQR->next;
-        currentQR->xPos = 930;
-        currentQR->yPos = 0;
-        currentQR->tagNum = 4;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = 0;
-        currentQR->yPos = 0;
-        currentQR->tagNum = 1;
-    }
-    else
-    {
-        currentQR->xPos = 0;
-        currentQR->yPos = 0;
-        currentQR->tagNum = 1;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = 980 * 1;
-        currentQR->yPos = 0;
-        currentQR->tagNum = 2;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = 980 * 2;
-        currentQR->yPos = 0;
-        currentQR->tagNum = 3;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = 980 * 3;
-        currentQR->yPos = 0;
-        currentQR->tagNum = 4;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = 980 * 4;
-        currentQR->yPos = 0;
+        currentQR->xPos = 890;
+        currentQR->yPos = -890;
         currentQR->tagNum = 5;
 
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
         currentQR = currentQR->next;
-        currentQR->xPos = 980 * 3;
-        currentQR->yPos = -980;
-        currentQR->tagNum = 20;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = 980 * 2;
+        currentQR->xPos = 890 * 2;
         currentQR->yPos = 0;
         currentQR->tagNum = 3;
 
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
         currentQR = currentQR->next;
-        currentQR->xPos = 980 * 1;
-        currentQR->yPos = 980;
-        currentQR->tagNum = 10;
-
-        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        currentQR->next = newQR;
-        currentQR = currentQR->next;
-        currentQR->xPos = 0;
-        currentQR->yPos = 980;
-        currentQR->tagNum = 9;
+        currentQR->xPos = 890;
+        currentQR->yPos = 0;
+        currentQR->tagNum = 2;
 
         newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
         currentQR->next = newQR;
@@ -252,6 +203,20 @@ int genQR(char ch)
         currentQR->xPos = 0;
         currentQR->yPos = 0;
         currentQR->tagNum = 1;
+
+        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+        currentQR->next = newQR;
+        currentQR = currentQR->next;
+        currentQR->xPos = 890;
+        currentQR->yPos = -890;
+        currentQR->tagNum = 5;
+
+        newQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+        currentQR->next = newQR;
+        currentQR = currentQR->next;
+        currentQR->xPos = 1220;
+        currentQR->yPos = -890;
+        currentQR->tagNum = 8;
     }
 
     currentQR = headQR;
@@ -294,7 +259,8 @@ void run(QRCode::qrcode_node_t *startQR)
         }
     }
 
-    setAngle(targetX, targetY);
+    //setAngle(targetX, targetY);
+    setAngle(radToDeg(targetAngle));
     usleep(1000);
     while (1)
     {
@@ -308,7 +274,6 @@ void run(QRCode::qrcode_node_t *startQR)
             if (currentQR->next != NULL)
             {
                 //currentTargetOffset = pow(pow((currentQR->next->xPos - currentQR->xPos), 2) + pow(currentQR->next->yPos - currentQR->yPos, 2), 0.5);
-                puts("here");
                 currentTargetOffsetX = currentQR->next->xPos - currentQR->xPos;
                 currentTargetOffsetY = currentQR->next->yPos - currentQR->yPos;
                 if (qrTagNum == currentQR->next->tagNum)
@@ -326,17 +291,11 @@ void run(QRCode::qrcode_node_t *startQR)
         currentTargetY = ((((float)odmRX * currentTargetOffsetX) + ((float)odmRY * currentTargetOffsetY)) / ((float)currentTargetOffsetX * currentTargetOffsetX + (float)currentTargetOffsetY * currentTargetOffsetY)) * currentTargetOffsetY + currentTargetOffsetY / 1.0 + startQR->yPos;
 
         //printf("XERR: %d, YERR: %d\n", targetX - odmX, targetY - odmY);
-
-        if (currentQR->next == NULL)
-        {
-        }
-        else
-        {
-        }
         float dErr = powf(powf(targetX - odmX, 2) + powf(targetY - odmY, 2), 0.5);
-        float dotErr = cosf(degToRad(odmAngle)) * (targetX - odmX) + sinf(degToRad(odmAngle)) * (targetY - odmY);
+        //float dotErr = cosf(degToRad(odmAngle)) * (targetX - odmX) + sinf(degToRad(odmAngle)) * (targetY - odmY);
+        float dotErr = dErr * cos(targetAngle - atan2(targetY - odmY, targetX - odmX));
         dErr = dotErr > 0 ? dErr : -dErr;
-        //printf("dErr = %f\n", dErr);
+        //printf("dotErr = %f\n", dotErr);
         if (abs(dotErr) < 10 && abs(setV) < 10)
         {
             car.setCarParams(0, 0);
@@ -345,13 +304,13 @@ void run(QRCode::qrcode_node_t *startQR)
         //printf("dRrr = %f\n", dErr);
         setV = linearPID.calculate(dErr);
 
-        printf("ctoX = %d\tctoY = %d\n", currentTargetOffsetX, currentTargetOffsetY);
+        //printf("ctoX = %d\tctoY = %d\n", currentTargetOffsetX, currentTargetOffsetY);
 
         // currentTargetX = targetX;
         // currentTargetY = targetY;
-        printf("ctoX = %d\tctoY = %d\n", currentTargetX, currentTargetY);
+        //printf("ctoX = %d\tctoY = %d\n", currentTargetX, currentTargetY);
 
-        float currentTargetAngle = (atan2(currentTargetY - odmY, currentTargetX - odmX)) / M_PI * 180.0;
+        float currentTargetAngle = radToDeg(atan2(currentTargetY - odmY, currentTargetX - odmX));
         float err;
         err = currentTargetAngle - odmAngle;
 
@@ -389,14 +348,15 @@ int main(int argc, char *argv[])
     std::vector<QRCode::qrcode_node_t *> headQRs;
     headQRs.push_back(headQR);
 
-    float prevTargetAngle = atan2(currentQR->next->yPos - currentQR->yPos, currentQR->next->yPos - currentQR->yPos);
+    float prevTargetAngle = atan2f(currentQR->next->yPos - currentQR->yPos, currentQR->next->xPos - currentQR->xPos);
     float currentTargetAngle = 0;
 
+    // printf("Tag%d: curr = %f\t prev=%f\n", currentQR->tagNum, currentTargetAngle, prevTargetAngle);
     currentQR = currentQR->next;
     while (currentQR->next != NULL)
     {
-        //printf("xerr = %d yerr = %d\n",currentQR->next->xPos - currentQR->xPos,currentQR->next->yPos - currentQR->yPos);
-        currentTargetAngle = atan2(currentQR->next->yPos - currentQR->yPos, currentQR->next->xPos - currentQR->xPos);
+        // printf("xerr = %d yerr = %d\n", currentQR->next->xPos - currentQR->xPos, currentQR->next->yPos - currentQR->yPos);
+        currentTargetAngle = atan2f(currentQR->next->yPos - currentQR->yPos, currentQR->next->xPos - currentQR->xPos);
         if (currentTargetAngle != prevTargetAngle)
         {
             headQR_new = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
