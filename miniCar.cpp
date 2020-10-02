@@ -1,11 +1,15 @@
+#include <iostream>
 #include <cstdio>
-#include <cstring>
+#include <string>
 #include <cmath>
 #include <vector>
-#include <termios.h> // for tcxxxattr, ECHO, etc ..
-#include <unistd.h>  // for STDIN_FILENO
+#include <thread>
+#include <termios.h>    // for tcxxxattr, ECHO, etc ..
+#include <unistd.h>     // for STDIN_FILENO
+#include <sys/socket.h> //for TCP socket
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-//#include "src/Car.h"
 #include "include/NewCar.h"
 #include "include/QRCode.h"
 #include "include/PIDController.h"
@@ -31,16 +35,120 @@ int16_t odmX = 0, odmY = 0;
 float odmAngle = 0;
 
 //PID Controllers
-PIDContorller angularPID(0.035, 0.000, 0.0, 3, -3, 0.05);
-PIDContorller linearPID(0.45, 0.000, 0.00, 1000, -1000, 3.0);
+PIDContorller angularPID(0.025, 0.000, 0.0, 3, -3, 0.05);
+PIDContorller linearPID(0.55, 0.000, 0.00, 1000, -1000, 3.0);
 //PIDContorller linearPID(0.7, 0.0, 0.01, 1000, -1000, 5);
 
+//TCP Client socket
+int socketfd = 0;
+struct sockaddr_in info;
+
+void tcpOdometry(void);
+void turnTo(float targetAngle);
+int genQR(char ch);
+void run(QRCode::qrcode_node_t *startQR);
+void calculateAndRun(QRCode::qrcode_node_t *head);
 void manualControl(void);
 char getch(void);
 
-void setAngle(float targetAngle)
+int main(int argc, char *argv[])
 {
-    car.getOdometry(odmX, odmY, odmAngle);
+    system("clear");
+    car.setCarParams(0, 0);
+    // if (!genQR(argv[1][0]))
+    // {
+    //     puts("Invalid Input!");
+    //     return 0;
+    // }
+    led.clear();
+    //calculateAndRun(headQR);
+
+    //return 0;
+
+    socketfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (socketfd == -1)
+    {
+        puts("Fail to create a socket.");
+        return 0;
+    }
+    memset(&info, 0, sizeof(info));                    //初始化 將struct涵蓋的bits設為0
+    info.sin_family = PF_INET;                         //sockaddr_in為Ipv4結構
+    info.sin_addr.s_addr = inet_addr("192.168.0.166"); //IP address
+    info.sin_port = htons(6666);
+    if (connect(socketfd, (const struct sockaddr *)&info, sizeof(info)) == -1)
+    {
+        return 0;
+    }
+    std::thread t1(tcpOdometry);
+
+A:
+
+    char buf[1024] = {0};
+    int bytes = recv(socketfd, buf, 1024, 0);
+    buf[bytes] = '\0';
+    printf("%d bytes received!\n", bytes);
+
+    headQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+    QRCode::qrcode_node_t *currQR = headQR;
+    QRCode::qrcode_node_t *prevQR;
+
+    const char *split_qr = ",;";
+    char *qrStr;
+    qrStr = strtok(buf, split_qr);
+    while (qrStr != NULL)
+    {
+        currQR->tagNum = atoi(qrStr);
+        qrStr = strtok(NULL, split_qr);
+        currQR->xPos = atoi(qrStr);
+        qrStr = strtok(NULL, split_qr);
+        currQR->yPos = atoi(qrStr);
+        qrStr = strtok(NULL, split_qr);
+        printf("TAG:%d X:%d Y:%d\n", currQR->tagNum, currQR->xPos, currQR->yPos);
+        currQR->next = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+        prevQR = currQR;
+        currQR = currQR->next;
+    }
+    free(currQR);
+    prevQR->next = NULL;
+
+    calculateAndRun(headQR);
+
+    goto A;
+
+    return 0;
+}
+
+void tcpOdometry(void)
+{
+    while (1)
+    {
+        int16_t odm[3] = {0};
+        odm[0] = odmX;
+        odm[1] = odmY;
+        odm[2] = (int16_t)odmAngle;
+
+        if (send(socketfd, odm, sizeof(odm), 0) == -1)
+        {
+            //close(socketfd);
+            puts("Host Disconnected!");
+            return;
+        }
+        if(setW>0.1){
+            led.setPattern(led.matrix_Right);
+        }else if (setW <-0.1)
+        {
+            led.setPattern(led.matrix_Left);
+        }else{
+            led.clear();
+        }
+        led.render();
+        
+        usleep(10000);
+    }
+}
+
+void turnTo(float targetAngle)
+{
     //float targetAngle = (atan2(targetY - odmY, targetX - odmX)) / M_PI * 180.0;
     //printf("%d %d\n", targetY - odmY, targetX - odmX);
     printf("Target = %f\n", targetAngle);
@@ -67,6 +175,7 @@ void setAngle(float targetAngle)
                 break;
             }
             car.setCarParams(setV, setW);
+            car.getOdometry(odmX, odmY, odmAngle);
             usleep(10000);
         }
     }
@@ -259,9 +368,9 @@ void run(QRCode::qrcode_node_t *startQR)
         }
     }
 
-    //setAngle(targetX, targetY);
-    setAngle(radToDeg(targetAngle));
-    usleep(1000);
+    //turnTo(targetX, targetY);
+    turnTo(radToDeg(targetAngle));
+    usleep(100000);
     while (1)
     {
         if (qrCode.getInformation(qrX, qrY, qrAngle, qrTagNum))
@@ -333,20 +442,12 @@ void run(QRCode::qrcode_node_t *startQR)
     }
 }
 
-int main(int argc, char *argv[])
+void calculateAndRun(QRCode::qrcode_node_t *head)
 {
-    system("clear");
-    if (!genQR(argv[1][0]))
-    {
-        puts("Invalid Input!");
-        return 0;
-    }
-    led.clear();
-
-    QRCode::qrcode_node_t *currentQR = headQR;
+    QRCode::qrcode_node_t *currentQR = head;
     QRCode::qrcode_node_t *headQR_new;
     std::vector<QRCode::qrcode_node_t *> headQRs;
-    headQRs.push_back(headQR);
+    headQRs.push_back(head);
 
     float prevTargetAngle = atan2f(currentQR->next->yPos - currentQR->yPos, currentQR->next->xPos - currentQR->xPos);
     float currentTargetAngle = 0;
@@ -381,8 +482,6 @@ int main(int argc, char *argv[])
         //printf("Turn at tag%d\n", headQRs[i]->tagNum);
         run(headQRs[i]);
     }
-
-    return 0;
 }
 
 // void manualControl(void)

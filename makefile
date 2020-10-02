@@ -10,7 +10,7 @@ csrc = $(wildcard lib/*/*.c)
 obj = $(cppsrc:.cpp=.o) $(csrc:.c=.o)
 
 $(TARGET): $(obj)
-	$(CCP) -o $@ $^ -l wiringPi	
+	$(CCP) -o $@ $^ -l wiringPi -pthread
 
 %.o : %.c
 	$(CC) $< -c -o $@
