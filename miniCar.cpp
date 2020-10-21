@@ -36,7 +36,7 @@ float odmAngle = 0;
 
 //PID Controllers
 PIDContorller angularPID(0.025, 0.000, 0.0, 3, -3, 0.05);
-PIDContorller linearPID(0.55, 0.000, 0.00, 1000, -1000, 3.0);
+PIDContorller linearPID(0.45, 0.000, 0.00, 1000, -1000, 3.0);
 //PIDContorller linearPID(0.7, 0.0, 0.01, 1000, -1000, 5);
 
 //TCP Client socket
@@ -71,49 +71,48 @@ int main(int argc, char *argv[])
         puts("Fail to create a socket.");
         return 0;
     }
-    memset(&info, 0, sizeof(info));                    //初始化 將struct涵蓋的bits設為0
-    info.sin_family = PF_INET;                         //sockaddr_in為Ipv4結構
-    info.sin_addr.s_addr = inet_addr("192.168.0.166"); //IP address
+    memset(&info, 0, sizeof(info));                     //初始化 將struct涵蓋的bits設為0
+    info.sin_family = PF_INET;                          //sockaddr_in為Ipv4結構
+    info.sin_addr.s_addr = inet_addr("192.168.72.231"); //IP address
     info.sin_port = htons(6666);
     if (connect(socketfd, (const struct sockaddr *)&info, sizeof(info)) == -1)
     {
         return 0;
     }
-    std::thread t1(tcpOdometry);
+    std::thread tcpOdometry_t(tcpOdometry);
 
-A:
-
-    char buf[1024] = {0};
-    int bytes = recv(socketfd, buf, 1024, 0);
-    buf[bytes] = '\0';
-    printf("%d bytes received!\n", bytes);
-
-    headQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-    QRCode::qrcode_node_t *currQR = headQR;
-    QRCode::qrcode_node_t *prevQR;
-
-    const char *split_qr = ",;";
-    char *qrStr;
-    qrStr = strtok(buf, split_qr);
-    while (qrStr != NULL)
+    while (1)
     {
-        currQR->tagNum = atoi(qrStr);
-        qrStr = strtok(NULL, split_qr);
-        currQR->xPos = atoi(qrStr);
-        qrStr = strtok(NULL, split_qr);
-        currQR->yPos = atoi(qrStr);
-        qrStr = strtok(NULL, split_qr);
-        printf("TAG:%d X:%d Y:%d\n", currQR->tagNum, currQR->xPos, currQR->yPos);
-        currQR->next = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
-        prevQR = currQR;
-        currQR = currQR->next;
+        char buf[1024] = {0};
+        int bytes = recv(socketfd, buf, 1024, 0);
+        buf[bytes] = '\0';
+        printf("%d bytes received!\n", bytes);
+
+        headQR = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+        QRCode::qrcode_node_t *currQR = headQR;
+        QRCode::qrcode_node_t *prevQR;
+
+        const char *split_qr = ",;";
+        char *qrStr;
+        qrStr = strtok(buf, split_qr);
+        while (qrStr != NULL)
+        {
+            currQR->tagNum = atoi(qrStr);
+            qrStr = strtok(NULL, split_qr);
+            currQR->xPos = atoi(qrStr);
+            qrStr = strtok(NULL, split_qr);
+            currQR->yPos = atoi(qrStr);
+            qrStr = strtok(NULL, split_qr);
+            printf("TAG:%d X:%d Y:%d\n", currQR->tagNum, currQR->xPos, currQR->yPos);
+            currQR->next = (QRCode::qrcode_node_t *)calloc(0, sizeof(QRCode::qrcode_node_t));
+            prevQR = currQR;
+            currQR = currQR->next;
+        }
+        free(currQR);
+        prevQR->next = NULL;
+
+        calculateAndRun(headQR);        
     }
-    free(currQR);
-    prevQR->next = NULL;
-
-    calculateAndRun(headQR);
-
-    goto A;
 
     return 0;
 }
@@ -133,16 +132,20 @@ void tcpOdometry(void)
             puts("Host Disconnected!");
             return;
         }
-        if(setW>0.1){
+        if (setW > 0.1)
+        {
             led.setPattern(led.matrix_Right);
-        }else if (setW <-0.1)
+        }
+        else if (setW < -0.1)
         {
             led.setPattern(led.matrix_Left);
-        }else{
+        }
+        else
+        {
             led.clear();
         }
         led.render();
-        
+
         usleep(10000);
     }
 }
