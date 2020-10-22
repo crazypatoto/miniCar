@@ -78,7 +78,7 @@ uint8_t NewCar::getOdometry(int16_t &x, int16_t &y, float &angle)
 
 void NewCar::setOdometry(const int16_t x, const int16_t y, const float angle)
 {
-    char txbuff[8] = {'O', 0, 0, 0, 0, 0, 0, 'E'};    
+    char txbuff[8] = {'O', 0, 0, 0, 0, 0, 0, 'E'};
 
     txbuff[1] = (x >> 8) & 0xFF;
     txbuff[2] = x & 0xFF;
@@ -99,6 +99,16 @@ void NewCar::setOdometry(const int16_t x, const int16_t y, const float angle)
 void NewCar::clearOdometry()
 {
     const char txbuff[3] = {'C', 'L', 'R'};
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        serialPutchar(fd, txbuff[i]);
+    }
+    usleep(1000);
+}
+
+void NewCar::sendStartSignal()
+{
+    const char txbuff[3] = {'S', 'T', 'R'};
     for (uint8_t i = 0; i < 3; i++)
     {
         serialPutchar(fd, txbuff[i]);

@@ -20,6 +20,7 @@ public:
     uint8_t getOdometry(int16_t &x, int16_t &y, float &angle);
     void setOdometry(const int16_t x, const int16_t y, const float angle);
     void clearOdometry();
+    void sendStartSignal();
 };
 
 #endif
