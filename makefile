@@ -8,12 +8,18 @@ csrc = $(wildcard lib/*/*.c)
 obj = $(cppsrc:.cpp=.o) $(csrc:.c=.o)
 
 .PHONY : all
-all: miniCar startUp
+all: miniCar startUp manualCar musicCar
 
 miniCar: $(obj) miniCar.cpp
 	$(CCP) -o $@ $^ -l wiringPi -pthread
 
 startUp: $(obj) startUp.cpp
+	$(CCP) -o $@ $^ -l wiringPi
+
+manualCar: $(obj) manualCar.cpp
+	$(CCP) -o $@ $^ -l wiringPi
+
+musicCar: $(obj) musicCar.cpp
 	$(CCP) -o $@ $^ -l wiringPi
 
 %.o : %.c
