@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     led.clear();    
 
     char ipa[15];
-    const char* hostname = "DARREN-LAPTOP";
+    const char* hostname = "DARREN-LAPTOP.local";
     if(hostname_to_ip(hostname,ipa) == -1){
         printf("Server %s not found!!!\n",hostname);
         return -1;
