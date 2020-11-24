@@ -37,7 +37,7 @@ float odmAngle = 0;
 
 //PID Controllers
 PIDContorller angularPID(0.055, 0.000, 0.0, 3, -3, 0.10);
-PIDContorller linearPID(1.0, 0.000, 0.00, 700, -700, 7.0);
+PIDContorller linearPID(1.2, 0.000, 0.00, 700, -700, 8);
 //PIDContorller linearPID(0.7, 0.0, 0.01, 1000, -1000, 5);
 
 //TCP Client socket
