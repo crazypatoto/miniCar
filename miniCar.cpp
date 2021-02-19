@@ -57,11 +57,8 @@ int main(int argc, char *argv[])
 {
     //system("clear");
     car.setCarParams(0, 0);
-    // if (!genQR(argv[1][0]))
-    // {
-    //     puts("Invalid Input!");
-    //     return 0;
-    // }
+    car.getOdometry(odmX, odmY, odmAngle);
+    
     led.clear();
 
     char ipa[15];
