@@ -117,11 +117,11 @@ int main(int argc, char *argv[])
             switch (axis)
             {
             case 0:
-                setV = (float)axes[axis].y / 32767.0 * 300.0;
+                setV = -(float)axes[axis].y / 32767.0 * 300.0;
                 setW = (float)axes[axis].x / 32767.0 * 1.5;
                 break;
             case 1:
-                setV_add = (float)axes[axis].y / 32767.0 * 200.0;
+                setV_add = -(float)axes[axis].y / 32767.0 * 200.0;
                 setW_add = (float)axes[axis].x / 32767.0 * 1.0;
                 break;
             case 2:

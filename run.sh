@@ -1,7 +1,6 @@
 #!/bin/bash
 while :
 do
-    sudo ./forward
-    sudo ./back
+    sudo /home/pi/miniCar/miniCar
 done
 

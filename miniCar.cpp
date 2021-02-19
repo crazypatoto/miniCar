@@ -36,8 +36,8 @@ int16_t odmX = 0, odmY = 0;
 float odmAngle = 0;
 
 //PID Controllers
-PIDContorller angularPID(0.025, 0.000, 0.0, 3, -3, 0.05);
-PIDContorller linearPID(0.45, 0.000, 0.00, 1000, -1000, 3.0);
+PIDContorller angularPID(0.055, 0.000, 0.0, 3, -3, 0.10);
+PIDContorller linearPID(1.2, 0.000, 0.00, 700, -700, 8);
 //PIDContorller linearPID(0.7, 0.0, 0.01, 1000, -1000, 5);
 
 //TCP Client socket
