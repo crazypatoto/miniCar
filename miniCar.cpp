@@ -8,7 +8,7 @@
 #include <unistd.h>     // for STDIN_FILENO
 #include <sys/socket.h> //for TCP socket
 #include <netinet/in.h>
-#include<netdb.h>	//hostent
+#include <netdb.h> //hostent
 #include <arpa/inet.h>
 
 #include "include/NewCar.h"
@@ -51,23 +51,23 @@ void run(QRCode::qrcode_node_t *startQR);
 void calculateAndRun(QRCode::qrcode_node_t *head);
 void manualControl(void);
 char getch(void);
-int hostname_to_ip(const char * hostname , char* ip);
+int hostname_to_ip(const char *hostname, char *ip);
 
 int main(int argc, char *argv[])
 {
-    system("clear");
+    //system("clear");
     car.setCarParams(0, 0);
     // if (!genQR(argv[1][0]))
     // {
     //     puts("Invalid Input!");
     //     return 0;
     // }
-    led.clear();    
+    led.clear();
 
     char ipa[15];
-    const char* hostname = "DARREN-LAPTOP.local";
+    const char *hostname = "DARREN-LAPTOP.local";
     if(hostname_to_ip(hostname,ipa) == -1){
-        printf("Server %s not found!!!\n",hostname);
+        printf("Server %s not found!!!\n", hostname);
         return -1;
     }
 
@@ -77,14 +77,15 @@ int main(int argc, char *argv[])
         puts("Fail to create a socket.");
         return 0;
     }
-    memset(&info, 0, sizeof(info));                     //初始化 將struct涵蓋的bits設為0
-    info.sin_family = PF_INET;                          //sockaddr_in為Ipv4結構   
+    memset(&info, 0, sizeof(info));        //初始化 將struct涵蓋的bits設為0
+    info.sin_family = PF_INET;             //sockaddr_in為Ipv4結構
     info.sin_addr.s_addr = inet_addr(ipa); //IP address
     info.sin_port = htons(6666);
     if (connect(socketfd, (const struct sockaddr *)&info, sizeof(info)) == -1)
     {
         return 0;
     }
+    printf("Connected to Host %s\n",ipa);
     std::thread tcpOdometry_t(tcpOdometry);
 
     while (1)
@@ -117,7 +118,7 @@ int main(int argc, char *argv[])
         free(currQR);
         prevQR->next = NULL;
 
-        calculateAndRun(headQR);        
+        calculateAndRun(headQR);
     }
 
     return 0;
@@ -151,8 +152,8 @@ void tcpOdometry(void)
             led.clear();
         }
         led.render();
-
-        usleep(10000);
+       
+        delay(10);
     }
 }
 
@@ -613,26 +614,26 @@ void calculateAndRun(QRCode::qrcode_node_t *head)
 // }
 
 
-int hostname_to_ip(const char * hostname , char* ip)
+int hostname_to_ip(const char *hostname, char *ip)
 {
-	struct hostent *he;
-	struct in_addr **addr_list;
-	int i;
-		
-	if ( (he = gethostbyname( hostname ) ) == NULL) 
-	{
-		// get the host info		
-		return -1;
-	}    
+    struct hostent *he;
+    struct in_addr **addr_list;
+    int i;
 
-	addr_list = (struct in_addr **) he->h_addr_list;    
-	
-	for(i = 0; addr_list[i] != NULL; i++) 
-	{
-		//Return the first one;
-		strcpy(ip , inet_ntoa(*addr_list[i]) );
-		return 0;
-	}
-	
-	return -1;
+    if ((he = gethostbyname(hostname)) == NULL)
+    {
+        // get the host info
+        return -1;
+    }
+
+    addr_list = (struct in_addr **)he->h_addr_list;
+
+    for (i = 0; addr_list[i] != NULL; i++)
+    {
+        //Return the first one;
+        strcpy(ip, inet_ntoa(*addr_list[i]));
+        return 0;
+    }
+
+    return -1;
 }
